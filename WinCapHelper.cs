@@ -9,6 +9,7 @@ using PacketDotNet;
 using SharpPcap.LibPcap;
 using ProcessListener;
 using System.IO.Compression;
+using System.Net;
 
 namespace Helper
 {
@@ -120,6 +121,32 @@ namespace Helper
             }
             return result;
         }
+        private static string ReadGzip2(byte[] buffer)
+        {
+            try
+            {
+                StringBuilder s = new StringBuilder(102400);
+                //WebClient wr = new WebClient();
+                //wr.Headers[HttpRequestHeader.AcceptEncoding] = "gzip, deflate";
+                //byte[] buffer = wr.DownloadData(url);
+                GZipStream g = new GZipStream((Stream)(new MemoryStream(buffer)), CompressionMode.Decompress);
+                byte[] d = new byte[20480];
+                int l = g.Read(d, 231, 20480-231);
+                while (l > 0)
+                {
+                    s.Append(Encoding.Default.GetString(d, 0, l));
+                    l = g.Read(d, 0, 20480);
+                }
+                return s.ToString();
+            }
+            catch (Exception ee)
+            {
+
+                return "";
+            }
+
+
+        }
         /// <summary>
         /// 接收到包的处理函数
         /// </summary>
@@ -149,17 +176,17 @@ namespace Helper
                         {
                             Console.WriteLine($"源IP：{ipPacket.SourceAddress}:{tcpPacket.SourcePort},目标IP{ipPacket.DestinationAddress}:{tcpPacket.DestinationPort}");
                             Console.WriteLine($"内容1：{Encoding.UTF8.GetString(tcpPacket.PayloadData)}");
-                            byte[] by = new byte[] { };
-                            tcpPacket.PayloadData.CopyTo(by, 231);
-                            Console.WriteLine($"内容2：{ReadGzip(by)}");
+                            //byte[] by = new byte[] { };
+                            //tcpPacket.PayloadData.CopyTo(by, 231);
+                            Console.WriteLine($"内容2：{ReadGzip2(tcpPacket.PayloadData)}");
                         }
                         if (ipPacket.PayloadData!=null)
                         {
                             Console.WriteLine($"源IP：{ipPacket.SourceAddress}:{tcpPacket.SourcePort},目标IP{ipPacket.DestinationAddress}:{tcpPacket.DestinationPort}");
                             Console.WriteLine($"内容3：{Encoding.UTF8.GetString(ipPacket.PayloadData)}");
-                            byte[] by = new byte[] { };
-                            tcpPacket.PayloadData.CopyTo(by, 231);
-                            Console.WriteLine($"内容4：{ReadGzip(by)}");
+                            //byte[] by = new byte[] { };
+                            //tcpPacket.PayloadData.CopyTo(by, 231);
+                            Console.WriteLine($"内容4：{ReadGzip2(ipPacket.PayloadData)}");
                         }                       
                     }
                     
@@ -167,6 +194,7 @@ namespace Helper
                 default:
                     break;
             }
+
             //Console.WriteLine(ipPacket.Protocol);
 
             //协议类别
