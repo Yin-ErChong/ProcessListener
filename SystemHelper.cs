@@ -52,6 +52,7 @@ namespace ProcessListener
         /// <returns></returns>
         public static string GetIP(bool complete)
         {
+
             try
             {
                 IPHostEntry IpEntry = Dns.GetHostEntry(Dns.GetHostName());
