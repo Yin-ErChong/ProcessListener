@@ -133,7 +133,7 @@ namespace Helper
                             string content = Encoding.UTF8.GetString(tcpPacket.PayloadData);
                             if (!string.IsNullOrEmpty(content)&&! string.IsNullOrEmpty(content.Trim()))
                             {
-                                LogHelper.Info($"\n【协议】：TCP，\n【源IP】：{ipPacket.SourceAddress}:{tcpPacket.SourcePort}\n,【目标IP】：{ipPacket.DestinationAddress}:{tcpPacket.DestinationPort},【内容】：{content}");
+                                LogHelper.Info($"\n【协议】：TCP，\n【程序名】：{Configer.Instance.ProcessName}，\n【源IP】：{ipPacket.SourceAddress}:{tcpPacket.SourcePort}\n,【目标IP】：{ipPacket.DestinationAddress}:{tcpPacket.DestinationPort},【内容】：{content}");
                             }                           
                         }
                     }                    
@@ -152,7 +152,7 @@ namespace Helper
                             {
                                 break;
                             }
-                            LogHelper.Info($"\n【协议】：UDP，\n【源IP】：{ipPacket.SourceAddress}:{udpPacket.SourcePort}\n,【目标IP】：{ipPacket.DestinationAddress}:{udpPacket.DestinationPort},【内容】：{content}");
+                            LogHelper.Info($"\n【协议】：UDP，\n【程序名】：{Configer.Instance.ProcessName}，\n【源IP】：{ipPacket.SourceAddress}:{udpPacket.SourcePort}\n,【目标IP】：{ipPacket.DestinationAddress}:{udpPacket.DestinationPort},【内容】：{content}");
                         }
                     }
                     break;
