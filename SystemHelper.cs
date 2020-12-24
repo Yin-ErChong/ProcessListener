@@ -13,7 +13,7 @@ namespace ProcessListener
     public class SystemHelper
     {
         /// <summary>
-        /// 设置开机启动
+        /// 设置开机启动（可能会触发杀毒软件，需要手动给权限）
         /// </summary>
         /// <param name="Started">是否启动</param>
         /// <param name="name">程序名称</param>
@@ -81,10 +81,10 @@ namespace ProcessListener
             catch { return ""; }
         }
 
-        // ===============================================
-        // The Method That Parses The NetStat Output
-        // And Returns A List Of Port Objects
-        // ===============================================
+        /// <summary>
+        /// 获取运行中的程序名及所占用的端口
+        /// </summary>
+        /// <returns></returns>
         public static List<Port> GetNetStatPorts()
         {
             var Ports = new List<Port>();
@@ -93,7 +93,6 @@ namespace ProcessListener
             {
                 using (Process p = new Process())
                 {
-
                     ProcessStartInfo ps = new ProcessStartInfo();
                     ps.Arguments = "-a -n -o";
                     ps.FileName = "netstat.exe";
@@ -102,10 +101,8 @@ namespace ProcessListener
                     ps.RedirectStandardInput = true;
                     ps.RedirectStandardOutput = true;
                     ps.RedirectStandardError = true;
-
                     p.StartInfo = ps;
                     p.Start();
-
                     StreamReader stdOutput = p.StandardOutput;
                     StreamReader stdError = p.StandardError;
 
@@ -129,9 +126,10 @@ namespace ProcessListener
                             Ports.Add(new Port
                             {
                                 protocol = localAddress.Contains("1.1.1.1") ? String.Format("{0}v6", tokens[1]) : String.Format("{0}v4", tokens[1]),
+                                ip_number = localAddress.Split(':')[0],
                                 port_number = localAddress.Split(':')[1],
                                 process_name = tokens[1] == "UDP" ? LookupProcess(Convert.ToInt32(tokens[4])) : LookupProcess(Convert.ToInt32(tokens[5]))
-                            });
+                            }) ;
                         }
                     }
                 }
@@ -151,9 +149,9 @@ namespace ProcessListener
             return procName;
         }
 
-        // ===============================================
-        // The Port Class We're Going To Create A List Of
-        // ===============================================
+        /// <summary>
+        /// 端口模型
+        /// </summary>
         public class Port
         {
             public string name
@@ -164,10 +162,13 @@ namespace ProcessListener
                 }
                 set { }
             }
+            public string ip_number { get; set; }
             public string port_number { get; set; }
             public string process_name { get; set; }
             public string protocol { get; set; }
         }
-        // Define other methods and classes here
+
+
+        
     }
 }

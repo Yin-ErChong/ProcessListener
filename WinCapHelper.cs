@@ -35,8 +35,8 @@ namespace Helper
             }
         }
         private Thread _thread;
-        private List<string> _listenPort;
-        
+        private List<string> _listenIPPort;
+        private string Ip { get; set; } = SystemHelper.GetIP(true);
 
         /// <summary>
         /// when get pocket,callback
@@ -55,6 +55,10 @@ namespace Helper
 
 
         }
+        public void SetPort(List<string> listenIPPort)
+        {
+            _listenIPPort= listenIPPort;
+        }
         public void Listen(List<string> listenPort=null)
         {
             if (_thread != null && _thread.IsAlive)
@@ -63,7 +67,7 @@ namespace Helper
             }
             if (listenPort!=null)
             {
-                _listenPort = listenPort;
+                _listenIPPort = listenPort;
             }
             //遍历网卡
             foreach (PcapDevice device in LibPcapLiveDeviceList.Instance)
@@ -96,56 +100,11 @@ namespace Helper
                 {
                     return;
                 }
-
-
                 str += "\r\n" + s + "\r\n";
-
-
                 //尝试创建新的TCP / IP数据包对象，
                 //第一个参数为以太头长度，第二个为数据包数据块
                 str += p.PrintHex() + "\r\n";
             }
-        }
-        public static string ReadGzip(byte[] bytes, string encoding = "GB2312")
-        {
-            string result = string.Empty;
-            using (MemoryStream ms = new MemoryStream(bytes))
-            {
-                using (GZipStream decompressedStream = new GZipStream(ms, CompressionMode.Decompress))
-                {
-                    using (StreamReader sr = new StreamReader(decompressedStream, Encoding.GetEncoding(encoding)))
-                    {
-                        result = sr.ReadToEnd();
-                    }
-                }
-            }
-            return result;
-        }
-        private static string ReadGzip2(byte[] buffer)
-        {
-            try
-            {
-                StringBuilder s = new StringBuilder(102400);
-                //WebClient wr = new WebClient();
-                //wr.Headers[HttpRequestHeader.AcceptEncoding] = "gzip, deflate";
-                //byte[] buffer = wr.DownloadData(url);
-                GZipStream g = new GZipStream((Stream)(new MemoryStream(buffer)), CompressionMode.Decompress);
-                byte[] d = new byte[20480];
-                int l = g.Read(d, 231, 20480-231);
-                while (l > 0)
-                {
-                    s.Append(Encoding.Default.GetString(d, 0, l));
-                    l = g.Read(d, 0, 20480);
-                }
-                return s.ToString();
-            }
-            catch (Exception ee)
-            {
-
-                return "";
-            }
-
-
         }
         /// <summary>
         /// 接收到包的处理函数
@@ -154,6 +113,10 @@ namespace Helper
         /// <param name="e"></param>
         private void device_OnPacketArrival(object sender, CaptureEventArgs e)
         {
+            if (_listenIPPort == null|| _listenIPPort.Count<1)
+            {
+                return;
+            }
             //解析出基本包
             var packet = PacketDotNet.Packet.ParsePacket(e.Packet.LinkLayerType, e.Packet.Data);
             //var ip = SystemHelper.GetIP(true);
@@ -164,85 +127,37 @@ namespace Helper
             }
             switch (ipPacket.Protocol.ToString())
             {
+                //此处可以解析http，但是当http消息体被压缩、加密、拆分的情况下无法解析
                 case "TCP":
                     var tcpPacket = (TcpPacket)packet.Extract(typeof(TcpPacket));
-                    //if (_listenPort!=null&& !_listenPort.Contains(tcpPacket.SourcePort.ToString())&&! _listenPort.Contains(tcpPacket.DestinationPort.ToString()))
-                    //{
-                    //    //break;
-                    //}
-                    if (ipPacket.SourceAddress.ToString()== "47.103.92.119"|| ipPacket.DestinationAddress.ToString()== "47.103.92.119")
+                    string sourceIpStr = $"{ipPacket.SourceAddress}:{tcpPacket.SourcePort}";
+                    string destinationIpStr = $"{ipPacket.DestinationAddress}:{tcpPacket.DestinationPort}";
+                    //检测到指定的ip地址出现
+                    if (_listenIPPort.Contains(sourceIpStr)|| _listenIPPort.Contains(destinationIpStr))
                     {
-                        if (tcpPacket.PayloadData!=null)
+                        if(tcpPacket.PayloadData != null)
                         {
-                            Console.WriteLine($"源IP：{ipPacket.SourceAddress}:{tcpPacket.SourcePort},目标IP{ipPacket.DestinationAddress}:{tcpPacket.DestinationPort}");
-                            Console.WriteLine($"内容1：{Encoding.UTF8.GetString(tcpPacket.PayloadData)}");
-                            //byte[] by = new byte[] { };
-                            //tcpPacket.PayloadData.CopyTo(by, 231);
-                            Console.WriteLine($"内容2：{ReadGzip2(tcpPacket.PayloadData)}");
+                            LogHelper.Info($"源IP：{ipPacket.SourceAddress}:{tcpPacket.SourcePort},目标IP{ipPacket.DestinationAddress}:{tcpPacket.DestinationPort},内容1：{Encoding.UTF8.GetString(tcpPacket.PayloadData)}");
                         }
-                        if (ipPacket.PayloadData!=null)
+                    }                    
+                    break;
+                case "UDP":
+                    var udpPacket = (UdpPacket)packet.Extract(typeof(UdpPacket));
+                    sourceIpStr = $"{ipPacket.SourceAddress}:{udpPacket.SourcePort}";
+                    destinationIpStr = $"{ipPacket.DestinationAddress}:{udpPacket.DestinationPort}";
+                    //检测到指定的ip地址出现
+                    if (_listenIPPort.Contains(sourceIpStr) || _listenIPPort.Contains(destinationIpStr))
+                    {
+                        if (udpPacket.PayloadData != null)
                         {
-                            Console.WriteLine($"源IP：{ipPacket.SourceAddress}:{tcpPacket.SourcePort},目标IP{ipPacket.DestinationAddress}:{tcpPacket.DestinationPort}");
-                            Console.WriteLine($"内容3：{Encoding.UTF8.GetString(ipPacket.PayloadData)}");
-                            //byte[] by = new byte[] { };
-                            //tcpPacket.PayloadData.CopyTo(by, 231);
-                            Console.WriteLine($"内容4：{ReadGzip2(ipPacket.PayloadData)}");
-                        }                       
+                            Console.WriteLine($"源IP：{ipPacket.SourceAddress}:{udpPacket.SourcePort},目标IP{ipPacket.DestinationAddress}:{udpPacket.DestinationPort}");
+                            Console.WriteLine($"内容1：{Encoding.UTF8.GetString(udpPacket.PayloadData)}");
+                        }
                     }
-                    
                     break;
                 default:
                     break;
             }
-
-            //Console.WriteLine(ipPacket.Protocol);
-
-            //协议类别
-           // var dlPacket = PacketDotNet.DataLinkPacket.ParsePacket(e.Packet.LinkLayerType, e.Packet.Data);
-
-
-            //var ethernetPacket = PacketDotNet.EthernetPacket.GetEncapsulated(packet);
-
-
-            //var internetLinkPacket = PacketDotNet.InternetLinkLayerPacket.Parse(packet.BytesHighPerformance.Bytes);
-            //var internetPacket = PacketDotNet.InternetPacket.Parse(packet.BytesHighPerformance.Bytes);
-
-
-            //var sessionPacket = PacketDotNet.SessionPacket.Parse(packet.BytesHighPerformance.Bytes);
-            //var appPacket = PacketDotNet.ApplicationPacket.Parse(packet.BytesHighPerformance.Bytes);
-            //var pppoePacket = PacketDotNet.PPPoEPacket.Parse(packet.BytesHighPerformance.Bytes);
-
-
-            //var arpPacket = PacketDotNet.ARPPacket.GetEncapsulated(packet);
-            //var ipPacket = PacketDotNet.IpPacket.GetEncapsulated(packet); //ip包
-            //var udpPacket = PacketDotNet.UdpPacket.GetEncapsulated(packet);
-            //var tcpPacket = PacketDotNet.TcpPacket.GetEncapsulated(packet);
-
-
-            string ret = "";
-           // PrintPacket(ref ret, packet);
-            //ParsePacket(ref ret, ethernetPacket);
-            //ParsePacket(ref ret, internetLinkPacket);
-            //ParsePacket(ref ret, internetPacket);
-            //ParsePacket(ref ret, sessionPacket);
-            //ParsePacket(ref ret, appPacket);
-            //ParsePacket(ref ret, pppoePacket);
-            //ParsePacket(ref ret, arpPacket);
-            //ParsePacket(ref ret, ipPacket);
-            //ParsePacket(ref ret, udpPacket);
-            //ParsePacket(ref ret, tcpPacket);
-
-
-
-
-            //if (!string.IsNullOrEmpty(ret))
-            //{
-            //    string rlt = "\r\n时间 : " +
-            //        DateTime.Now.ToLongTimeString() +
-            //        "\r\n数据包: \r\n" + ret;
-            //    _logAction(rlt);
-            //}
-
 
         }
 
