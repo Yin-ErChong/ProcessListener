@@ -96,6 +96,7 @@ namespace ProcessListener
                     ProcessStartInfo ps = new ProcessStartInfo();
                     ps.Arguments = "-a -n -o";
                     ps.FileName = "netstat.exe";
+                    ps.CreateNoWindow = true;
                     ps.UseShellExecute = false;
                     ps.WindowStyle = ProcessWindowStyle.Hidden;
                     ps.RedirectStandardInput = true;
@@ -136,7 +137,7 @@ namespace ProcessListener
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                LogHelper.Error("GetNetStatPorts发生异常",ex);
             }
             return Ports;
         }

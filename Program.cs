@@ -11,12 +11,12 @@ namespace ProcessListener
 {
     class Program
     {
+        private static bool isFindProcess = false;
         static void Main(string[] args)
         {
             // 打印SharpPcap版本
             string ver = SharpPcap.Version.VersionString;
-            LogHelper.Info("测试");
-            Console.WriteLine("SharpPcap {0}, Example1.IfList.cs", ver);
+            LogHelper.Info($"SharpPcap版本号{ver}，ProcessListener启动中..");
             string exePath  = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
             SystemHelper.SetAutoStart(true, "ProcessListener", exePath);
             //启动检测线程
@@ -30,7 +30,6 @@ namespace ProcessListener
             thread.Start();
             //开始侦听
             WinCapHelper.WinCapInstance.Listen() ;
-            Console.ReadLine();
         }
         /// <summary>
         /// 检测指定程序是否启动
@@ -44,18 +43,26 @@ namespace ProcessListener
                 var listenPort = pro.Where(n => n.process_name == listenProcessName)?.Select(n => $"{n.ip_number}:{n.port_number}").ToList();
                 if (listenPort != null && listenPort.Count > 0)
                 {
-                    Console.WriteLine($"发现程序启动端口：{JsonConvert.SerializeObject(listenPort)}");
+                    if (!isFindProcess)
+                    {
+                        isFindProcess = true;
+                        LogHelper.Info($"发现程序启动端口：{JsonConvert.SerializeObject(listenPort)}");
+                    }
                     WinCapHelper.WinCapInstance.SetPort(listenPort);
                 }
                 else
                 {
-                    Console.WriteLine($"程序关闭");
+                    if (isFindProcess)
+                    {
+                        isFindProcess = false;
+                        LogHelper.Error($"程序关闭");
+                    }                   
                     WinCapHelper.WinCapInstance.SetPort(null);
                 }
             }
             catch (Exception ee)
             {
-                Console.WriteLine("发生异常");
+                LogHelper.Error("检测端口程序发生异常",ee);
             }           
         }
     }

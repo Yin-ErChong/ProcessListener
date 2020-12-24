@@ -34,7 +34,6 @@ namespace Helper
                 return _capInstance;
             }
         }
-        private Thread _thread;
         private List<string> _listenIPPort;
         private string Ip { get; set; } = SystemHelper.GetIP(true);
 
@@ -61,10 +60,6 @@ namespace Helper
         }
         public void Listen(List<string> listenPort=null)
         {
-            if (_thread != null && _thread.IsAlive)
-            {
-                return;
-            }
             if (listenPort!=null)
             {
                 _listenIPPort = listenPort;
@@ -83,9 +78,7 @@ namespace Helper
                 thread.Start();
                 //device.StartCapture();
             }
-        } 
-
-        
+        }        
         /// <summary>
         /// 打印包信息，组合包太复杂了，所以直接把hex字符串打出来了
         /// </summary>
@@ -137,7 +130,11 @@ namespace Helper
                     {
                         if(tcpPacket.PayloadData != null)
                         {
-                            LogHelper.Info($"源IP：{ipPacket.SourceAddress}:{tcpPacket.SourcePort},目标IP{ipPacket.DestinationAddress}:{tcpPacket.DestinationPort},内容1：{Encoding.UTF8.GetString(tcpPacket.PayloadData)}");
+                            string content = Encoding.UTF8.GetString(tcpPacket.PayloadData);
+                            if (!string.IsNullOrEmpty(content)&&! string.IsNullOrEmpty(content.Trim()))
+                            {
+                                LogHelper.Info($"\n【协议】：TCP，\n【源IP】：{ipPacket.SourceAddress}:{tcpPacket.SourcePort}\n,【目标IP】：{ipPacket.DestinationAddress}:{tcpPacket.DestinationPort},【内容】：{content}");
+                            }                           
                         }
                     }                    
                     break;
@@ -150,8 +147,12 @@ namespace Helper
                     {
                         if (udpPacket.PayloadData != null)
                         {
-                            Console.WriteLine($"源IP：{ipPacket.SourceAddress}:{udpPacket.SourcePort},目标IP{ipPacket.DestinationAddress}:{udpPacket.DestinationPort}");
-                            Console.WriteLine($"内容1：{Encoding.UTF8.GetString(udpPacket.PayloadData)}");
+                            string content = Encoding.UTF8.GetString(udpPacket.PayloadData);
+                            if (!string.IsNullOrEmpty(content) &&! string.IsNullOrEmpty(content.Trim()))
+                            {
+                                break;
+                            }
+                            LogHelper.Info($"\n【协议】：UDP，\n【源IP】：{ipPacket.SourceAddress}:{udpPacket.SourcePort}\n,【目标IP】：{ipPacket.DestinationAddress}:{udpPacket.DestinationPort},【内容】：{content}");
                         }
                     }
                     break;
@@ -160,7 +161,6 @@ namespace Helper
             }
 
         }
-
         public void StopAll()
         {
             foreach (PcapDevice device in SharpPcap.CaptureDeviceList.Instance)
@@ -172,7 +172,6 @@ namespace Helper
                 }
                 _logAction("device : " + device.Description + " stoped.\r\n");
             }
-            _thread.Abort();
         }
 
 
