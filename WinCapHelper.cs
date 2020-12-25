@@ -130,8 +130,8 @@ namespace Helper
                     {
                         if(tcpPacket.PayloadData != null)
                         {
-                            string content = Encoding.UTF8.GetString(tcpPacket.PayloadData);
-                            if (!string.IsNullOrEmpty(content)&&! string.IsNullOrEmpty(content.Trim()))
+                            string content = Encoding.Default.GetString(tcpPacket.PayloadData);
+                            if (!string.IsNullOrEmpty(content)&&! string.IsNullOrEmpty(content.Trim())&& content.Trim()!="\0")
                             {
                                 LogHelper.Info($"\n【协议】：TCP，\n【程序名】：{Configer.Instance.ProcessName}，\n【源IP】：{ipPacket.SourceAddress}:{tcpPacket.SourcePort}\n,【目标IP】：{ipPacket.DestinationAddress}:{tcpPacket.DestinationPort},【内容】：{content}");
                             }                           
@@ -147,12 +147,11 @@ namespace Helper
                     {
                         if (udpPacket.PayloadData != null)
                         {
-                            string content = Encoding.UTF8.GetString(udpPacket.PayloadData);
-                            if (!string.IsNullOrEmpty(content) &&! string.IsNullOrEmpty(content.Trim()))
+                            string content = Encoding.Default.GetString(udpPacket.PayloadData);
+                            if (!string.IsNullOrEmpty(content) &&! string.IsNullOrEmpty(content.Trim()) && content.Trim() != "\0")
                             {
-                                break;
-                            }
-                            LogHelper.Info($"\n【协议】：UDP，\n【程序名】：{Configer.Instance.ProcessName}，\n【源IP】：{ipPacket.SourceAddress}:{udpPacket.SourcePort}\n,【目标IP】：{ipPacket.DestinationAddress}:{udpPacket.DestinationPort},【内容】：{content}");
+                                LogHelper.Info($"\n【协议】：UDP，\n【程序名】：{Configer.Instance.ProcessName}，\n【源IP】：{ipPacket.SourceAddress}:{udpPacket.SourcePort}\n,【目标IP】：{ipPacket.DestinationAddress}:{udpPacket.DestinationPort},【内容】：{content}");
+                            }                          
                         }
                     }
                     break;
