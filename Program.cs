@@ -29,7 +29,8 @@ namespace ProcessListener
             });
             thread.Start();
             //开始侦听
-            WinCapHelper.WinCapInstance.Listen() ;
+            WinCapHelper.WinCapInstance.Listen();
+            LogHelper.Info($"程序启动完成");
         }
         /// <summary>
         /// 检测指定程序是否启动
