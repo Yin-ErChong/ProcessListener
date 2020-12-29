@@ -102,58 +102,75 @@ namespace Helper
         /// <param name="e"></param>
         private void device_OnPacketArrival(object sender, CaptureEventArgs e)
         {
-            if (_listenIPPort == null|| _listenIPPort.Count<1)
+            try
             {
-                return;
-            }
-            //解析出基本包
-            var packet = PacketDotNet.Packet.ParsePacket(e.Packet.LinkLayerType, e.Packet.Data);
-            //var ip = SystemHelper.GetIP(true);
-            var ipPacket = (IpPacket)packet.Extract(typeof(IpPacket));
-            if (ipPacket==null)
-            {
-                return;
-            }
-            switch (ipPacket.Protocol.ToString())
-            {
-                //此处可以解析http，但是当http消息体被压缩、加密、拆分的情况下无法解析
-                case "TCP":
-                    var tcpPacket = (TcpPacket)packet.Extract(typeof(TcpPacket));
-                    string sourceIpStr = $"{ipPacket.SourceAddress}:{tcpPacket.SourcePort}";
-                    string destinationIpStr = $"{ipPacket.DestinationAddress}:{tcpPacket.DestinationPort}";
-                    //检测到指定的ip地址出现
-                    if (_listenIPPort.Contains(sourceIpStr)|| _listenIPPort.Contains(destinationIpStr))
-                    {
-                        if(tcpPacket.PayloadData != null)
+                if (_listenIPPort == null || _listenIPPort.Count < 1)
+                {
+                    return;
+                }
+                //解析出基本包
+                var packet = PacketDotNet.Packet.ParsePacket(e.Packet.LinkLayerType, e.Packet.Data);
+                //var ip = SystemHelper.GetIP(true);
+                var ipPacket = (IpPacket)packet.Extract(typeof(IpPacket));
+                if (ipPacket == null)
+                {
+                    return;
+                }
+                switch (ipPacket.Protocol.ToString())
+                {
+                    //此处可以解析http，但是当http消息体被压缩、加密、拆分的情况下无法解析
+                    case "TCP":
+                        var tcpPacket = (TcpPacket)packet.Extract(typeof(TcpPacket));
+                        string sourceIpStr = $"{ipPacket.SourceAddress}:{tcpPacket.SourcePort}";
+                        string destinationIpStr = $"{ipPacket.DestinationAddress}:{tcpPacket.DestinationPort}";
+                        if (Configer.Instance.DestinationIPs?.Count>0&& (Configer.Instance.DestinationIPs.Contains(ipPacket.SourceAddress.ToString()) || Configer.Instance.DestinationIPs.Contains(tcpPacket.DestinationPort.ToString())))
                         {
                             string content = Encoding.Default.GetString(tcpPacket.PayloadData);
-                            if (!string.IsNullOrEmpty(content)&&! string.IsNullOrEmpty(content.Trim())&& content.Trim()!="\0")
+                            if (!string.IsNullOrEmpty(content) && !string.IsNullOrEmpty(content.Trim()) && content.Trim() != "\0")
                             {
                                 LogHelper.Info($"\n【协议】：TCP，\n【程序名】：{Configer.Instance.ProcessName}，\n【源IP】：{ipPacket.SourceAddress}:{tcpPacket.SourcePort}\n,【目标IP】：{ipPacket.DestinationAddress}:{tcpPacket.DestinationPort},【内容】：{content}");
-                            }                           
+                            }
+                            break;
                         }
-                    }                    
-                    break;
-                case "UDP":
-                    var udpPacket = (UdpPacket)packet.Extract(typeof(UdpPacket));
-                    sourceIpStr = $"{ipPacket.SourceAddress}:{udpPacket.SourcePort}";
-                    destinationIpStr = $"{ipPacket.DestinationAddress}:{udpPacket.DestinationPort}";
-                    //检测到指定的ip地址出现
-                    if (_listenIPPort.Contains(sourceIpStr) || _listenIPPort.Contains(destinationIpStr))
-                    {
-                        if (udpPacket.PayloadData != null)
+                        //检测到指定的ip地址出现
+                        if (_listenIPPort.Contains(sourceIpStr) || _listenIPPort.Contains(destinationIpStr))
                         {
-                            string content = Encoding.Default.GetString(udpPacket.PayloadData);
-                            if (!string.IsNullOrEmpty(content) &&! string.IsNullOrEmpty(content.Trim()) && content.Trim() != "\0")
+                            if (tcpPacket.PayloadData != null)
                             {
-                                LogHelper.Info($"\n【协议】：UDP，\n【程序名】：{Configer.Instance.ProcessName}，\n【源IP】：{ipPacket.SourceAddress}:{udpPacket.SourcePort}\n,【目标IP】：{ipPacket.DestinationAddress}:{udpPacket.DestinationPort},【内容】：{content}");
-                            }                          
+                                string content = Encoding.Default.GetString(tcpPacket.PayloadData);
+                                if (!string.IsNullOrEmpty(content) && !string.IsNullOrEmpty(content.Trim()) && content.Trim() != "\0")
+                                {
+                                    LogHelper.Info($"\n【协议】：TCP，\n【程序名】：{Configer.Instance.ProcessName}，\n【源IP】：{ipPacket.SourceAddress}:{tcpPacket.SourcePort}\n,【目标IP】：{ipPacket.DestinationAddress}:{tcpPacket.DestinationPort},【内容】：{content}");
+                                }
+                            }
                         }
-                    }
-                    break;
-                default:
-                    break;
+                        break;
+                    case "UDP":
+                        var udpPacket = (UdpPacket)packet.Extract(typeof(UdpPacket));
+                        sourceIpStr = $"{ipPacket.SourceAddress}:{udpPacket.SourcePort}";
+                        destinationIpStr = $"{ipPacket.DestinationAddress}:{udpPacket.DestinationPort}";
+                        //检测到指定的ip地址出现
+                        if (_listenIPPort.Contains(sourceIpStr) || _listenIPPort.Contains(destinationIpStr))
+                        {
+                            if (udpPacket.PayloadData != null)
+                            {
+                                string content = Encoding.Default.GetString(udpPacket.PayloadData);
+                                if (!string.IsNullOrEmpty(content) && !string.IsNullOrEmpty(content.Trim()) && content.Trim() != "\0")
+                                {
+                                    LogHelper.Info($"\n【协议】：UDP，\n【程序名】：{Configer.Instance.ProcessName}，\n【源IP】：{ipPacket.SourceAddress}:{udpPacket.SourcePort}\n,【目标IP】：{ipPacket.DestinationAddress}:{udpPacket.DestinationPort},【内容】：{content}");
+                                }
+                            }
+                        }
+                        break;
+                    default:
+                        break;
+                }
             }
+            catch (Exception ee)
+            {
+                LogHelper.Error("程序异常",ee);
+            }
+           
 
         }
         public void StopAll()

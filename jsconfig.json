@@ -1,3 +1,4 @@
 {
-  "ProcessName": "chrome" //EveryThingTest
+  "ProcessName": "chrome",
+  "DestinationIPs": [ "47.103.92.119" ]
 }

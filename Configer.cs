@@ -20,6 +20,7 @@ namespace ProcessListener
         public class ConfigModel
         {
             public string ProcessName { get; set; }
+            public List<string> DestinationIPs { get; set; }
         }
 
     }

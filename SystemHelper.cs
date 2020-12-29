@@ -131,7 +131,7 @@ namespace ProcessListener
                                 protocol = localAddress.Contains("1.1.1.1") ? String.Format("{0}v6", tokens[1]) : String.Format("{0}v4", tokens[1]),
                                 ip_number = localAddress.Split(':')[0],
                                 port_number = localAddress.Split(':')[1],
-                                process_name = tokens[1] == "UDP" ? LookupProcess(Convert.ToInt32(tokens[4])) : LookupProcess(Convert.ToInt32(tokens[5]))
+                                process_name = tokens[1] == "UDP"? LookupProcess(Convert.ToInt32(tokens[4])) : LookupProcess(Convert.ToInt32(tokens[5]))
                             }) ;
                         }
                     }
