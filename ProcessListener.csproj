@@ -78,6 +78,9 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="WinPcap_4_1_3.exe">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="使用说明.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
