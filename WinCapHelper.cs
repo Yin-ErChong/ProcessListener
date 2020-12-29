@@ -34,14 +34,9 @@ namespace Helper
                 return _capInstance;
             }
         }
+        private LibPcapLiveDeviceList devices;
         private List<string> _listenIPPort;
         private string Ip { get; set; } = SystemHelper.GetIP(true);
-
-        /// <summary>
-        /// when get pocket,callback
-        /// </summary>
-        public Action<string> _logAction;
-
 
         /// <summary>
         /// 过滤条件关键字
@@ -51,7 +46,8 @@ namespace Helper
 
         private WinCapHelper()
         {
-
+            devices = LibPcapLiveDeviceList.Instance;
+            LogHelper.Info($"程序启动完成");
 
         }
         public void SetPort(List<string> listenIPPort)
@@ -65,7 +61,7 @@ namespace Helper
                 _listenIPPort = listenPort;
             }
             //遍历网卡
-            foreach (PcapDevice device in LibPcapLiveDeviceList.Instance)
+            foreach (PcapDevice device in devices)
             {
                 Thread thread = new Thread(n=> {
 
@@ -80,7 +76,7 @@ namespace Helper
             }
         }        
         /// <summary>
-        /// 打印包信息，组合包太复杂了，所以直接把hex字符串打出来了
+        /// 打印包信息，组合包太复杂了，不建议解析
         /// </summary>
         /// <param name="str"></param>
         /// <param name="p"></param>
@@ -162,14 +158,14 @@ namespace Helper
         }
         public void StopAll()
         {
-            foreach (PcapDevice device in SharpPcap.CaptureDeviceList.Instance)
+            foreach (PcapDevice device in devices)
             {
                 if (device.Opened)
                 {
                     Thread.Sleep(500);
                     device.StopCapture();
                 }
-                _logAction("device : " + device.Description + " stoped.\r\n");
+                LogHelper.Info($"关闭{device.Interface.FriendlyName}的侦听");
             }
         }
 

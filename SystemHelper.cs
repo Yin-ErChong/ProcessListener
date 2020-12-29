@@ -29,8 +29,9 @@ namespace ProcessListener
                     Run.SetValue(name, path);
                     HKLM.Close();
                 }
-                catch//没有权限会异常            
-                { 
+                catch(Exception ee)//没有权限会异常            
+                {
+                    LogHelper.Error("设置开机启动失败，请检查权限", ee);
                 }
             }
             else
@@ -40,8 +41,9 @@ namespace ProcessListener
                     Run.DeleteValue(name);
                     HKLM.Close();
                 }
-                catch//没有权限会异常
-                { 
+                catch (Exception ee)//没有权限会异常            
+                {
+                    LogHelper.Error("取消开机启动失败，请检查权限", ee);
                 }
             }
         }

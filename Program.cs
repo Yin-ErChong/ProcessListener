@@ -18,24 +18,22 @@ namespace ProcessListener
             string ver = SharpPcap.Version.VersionString;
             LogHelper.Info($"SharpPcap版本号{ver}，ProcessListener启动中..");
             string exePath  = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
-            SystemHelper.SetAutoStart(true, "ProcessListener", exePath);
+            SystemHelper.SetAutoStart(true, "ProcessListener", exePath);        
             //启动检测线程
             Thread thread = new Thread(n=> {
                 while (true)
                 {
-                    CheckProcess();
+                    CheckProcessAndBegin();
                     Thread.Sleep(3000);
                 }            
             });
             thread.Start();
-            //开始侦听
-            WinCapHelper.WinCapInstance.Listen();
-            LogHelper.Info($"程序启动完成");
+
         }
         /// <summary>
         /// 检测指定程序是否启动
         /// </summary>
-        public static void CheckProcess()
+        public static bool CheckProcessAndBegin()
         {
             try
             {
@@ -47,23 +45,29 @@ namespace ProcessListener
                     if (!isFindProcess)
                     {
                         isFindProcess = true;
+                        //设置目标程序端口
+                        WinCapHelper.WinCapInstance.SetPort(listenPort);
+                        //目标程序启动则直接开始侦听
+                        WinCapHelper.WinCapInstance.Listen();
                         LogHelper.Info($"发现程序启动端口：{JsonConvert.SerializeObject(listenPort)}");
                     }
-                    WinCapHelper.WinCapInstance.SetPort(listenPort);
+                    return true;
                 }
                 else
                 {
                     if (isFindProcess)
                     {
                         isFindProcess = false;
-                        LogHelper.Error($"程序关闭");
-                    }                   
-                    WinCapHelper.WinCapInstance.SetPort(null);
+                        WinCapHelper.WinCapInstance.StopAll();                       
+                    }
+                    LogHelper.Error($"目标程序未启动");
+                    return false;
                 }
             }
             catch (Exception ee)
             {
                 LogHelper.Error("检测端口程序发生异常",ee);
+                return false;
             }           
         }
     }
